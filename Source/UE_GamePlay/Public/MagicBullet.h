@@ -26,7 +26,7 @@ protected:
 
 	TSubclassOf<AActor> MagicClass;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USphereComponent* SphereComp;
 
 	UPROPERTY(VisibleAnywhere)

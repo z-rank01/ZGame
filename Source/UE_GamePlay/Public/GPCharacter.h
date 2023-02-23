@@ -28,6 +28,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AnimMontage;
 
+	FTimerHandle TimerHandle_PrimaryAttack;
+
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
@@ -43,6 +45,7 @@ protected:
 	void MoveForward(float value);
 	void MoveRight(float value);
 	void Attack();
+	void Attack_TimeDelay();
 	void PrimaryInteract();
 
 public:	

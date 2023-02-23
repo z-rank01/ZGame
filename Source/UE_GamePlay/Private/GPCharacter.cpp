@@ -76,21 +76,26 @@ void AGPCharacter::MoveRight(float value)
 	AddMovementInput(RightVector, value);
 }
 
+void AGPCharacter::PrimaryInteract()
+{
+	InteractionComp->PrimaryInteraction();
+}
 
 void AGPCharacter::Attack()
 {
 	PlayAnimMontage(AnimMontage);
 	
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_Front");
-
-	FTransform SpawnTF = FTransform(GetControlRotation(), HandLocation);
-	FActorSpawnParameters SpawnParas;
-	SpawnParas.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	GetWorld()->SpawnActor<AActor>(MagicClass, SpawnTF, SpawnParas);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AGPCharacter::Attack_TimeDelay, 0.2f);
 }
 
-void AGPCharacter::PrimaryInteract()
+void AGPCharacter::Attack_TimeDelay()
 {
-	InteractionComp->PrimaryInteraction();
+	FVector HandLocation = GetMesh()->GetSocketLocation("Middle_Attack");
+	FTransform SpawnTransform = FTransform(GetControlRotation(), HandLocation);
+
+	FActorSpawnParameters SpawnParas;
+	SpawnParas.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParas.Instigator = this;
+
+	GetWorld()->SpawnActor<AActor>(MagicClass, SpawnTransform, SpawnParas);
 }

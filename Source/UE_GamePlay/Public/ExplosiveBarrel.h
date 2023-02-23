@@ -25,6 +25,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	URadialForceComponent* RadialForceComp;
 
+	UFUNCTION()
+	void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalInpulse, const FHitResult& Hit);
+
+	// Called before 'BeginPlay' but after the constructor
+	virtual void PostInitializeComponents() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
