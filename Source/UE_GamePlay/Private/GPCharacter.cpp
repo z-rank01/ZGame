@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Particles/ParticleEventManager.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AGPCharacter::AGPCharacter()
@@ -40,6 +41,28 @@ void AGPCharacter::Tick(float DeltaTime)
 
 }
 
+const FVector AGPCharacter::OrientDirection()
+{
+	// Orient the attack direction towards to CrossHair by Line trace
+	FRotator CameraRotator = CameraComp->GetComponentRotation();
+	FVector CameraLocation = CameraComp->GetComponentLocation();
+	FVector CameraEnd = CameraLocation + CameraRotator.Vector() * 10000;
+
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_PhysicsBody);
+
+	FHitResult Hit;
+	bool Hit_result = GetWorld()->LineTraceSingleByObjectType(Hit, CameraLocation, CameraEnd, ObjectQueryParams);
+	FVector end = Hit_result ? Hit.ImpactPoint : Hit.TraceEnd;
+
+	//FColor DebugColor = Hit_result ? FColor::Green : FColor::Orange;
+	//DrawDebugLine(GetWorld(), HandLocation, Hit.ImpactPoint, DebugColor, false, 2.0f, 0, 1.5f);
+
+	return end;
+}
+
 // Called to bind functionality to input
 void AGPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -50,7 +73,9 @@ void AGPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
-	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AGPCharacter::Attack);
+	PlayerInputComponent->BindAction("MagicBullet", IE_Pressed, this, &AGPCharacter::Attack_MagicBullet);
+	PlayerInputComponent->BindAction("BlackHole", IE_Pressed, this, &AGPCharacter::Attack_BlackHole);
+	PlayerInputComponent->BindAction("Teleport", IE_Pressed, this, &AGPCharacter::Attack_Teleport);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AGPCharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AGPCharacter::PrimaryInteract);
 }
@@ -81,21 +106,56 @@ void AGPCharacter::PrimaryInteract()
 	InteractionComp->PrimaryInteraction();
 }
 
-void AGPCharacter::Attack()
+// Attack: Magic Bullet
+void AGPCharacter::Attack_MagicBullet()
 {
 	PlayAnimMontage(AnimMontage);
-	
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AGPCharacter::Attack_TimeDelay, 0.2f);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AGPCharacter::CallingAttack_MB, 0.2f);
 }
 
-void AGPCharacter::Attack_TimeDelay()
+void AGPCharacter::CallingAttack_MB()
+{
+	Attack(MagicBullet);
+}
+
+// Attack: Black Hole
+void AGPCharacter::Attack_BlackHole()
+{
+	PlayAnimMontage(AnimMontage);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AGPCharacter::CallingAttack_BH, 0.2f);
+}
+
+void AGPCharacter::CallingAttack_BH()
+{
+	Attack(BlackHole);
+}
+
+// Attack: Teleport
+void AGPCharacter::Attack_Teleport()
+{
+	PlayAnimMontage(AnimMontage);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AGPCharacter::CallingAttack_TP, 0.2f);
+}
+
+void AGPCharacter::CallingAttack_TP()
+{
+	Attack(Teleport);
+}
+
+// Basic attack function
+void AGPCharacter::Attack(TSubclassOf<AActor> AttackName)
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Middle_Attack");
-	FTransform SpawnTransform = FTransform(GetControlRotation(), HandLocation);
+	FVector end = AGPCharacter::OrientDirection();
+	
+	FRotator OrientRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, end);
+
+	FTransform SpawnTransform = FTransform(OrientRotation, HandLocation);
 
 	FActorSpawnParameters SpawnParas;
 	SpawnParas.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParas.Instigator = this;
 
-	GetWorld()->SpawnActor<AActor>(MagicClass, SpawnTransform, SpawnParas);
+	GetWorld()->SpawnActor<AActor>(AttackName, SpawnTransform, SpawnParas);
 }
+

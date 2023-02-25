@@ -23,7 +23,13 @@ public:
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> MagicClass;
+	TSubclassOf<AActor> MagicBullet;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> BlackHole;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> Teleport;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AnimMontage;
@@ -44,9 +50,18 @@ protected:
 
 	void MoveForward(float value);
 	void MoveRight(float value);
-	void Attack();
-	void Attack_TimeDelay();
+	void Attack(TSubclassOf<AActor> AttackName);
 	void PrimaryInteract();
+	const FVector OrientDirection();
+
+	void Attack_MagicBullet();
+	void CallingAttack_MB();	
+
+	void Attack_BlackHole();
+	void CallingAttack_BH();
+
+	void Attack_Teleport();
+	void CallingAttack_TP();
 
 public:	
 	// Called every frame
